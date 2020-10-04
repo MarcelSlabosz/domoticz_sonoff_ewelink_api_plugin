@@ -45,6 +45,7 @@
 import Domoticz
 import subprocess
 import json
+import os.path
 
 
 def _(text):
@@ -65,7 +66,7 @@ class SonoffEwelinkApi:
 
     def __init__(self):
         self.UNIT_SWITCH = 1
-        self._heartbeat_iterator = 0
+        self._heartbeat_iterator = 5
 
     def on_start(self):
         # here we should add devices if not exists.
@@ -168,15 +169,28 @@ class SonoffEwelinkApi:
             self._refresh_state()
 
     def _call_api(self, access_token, api_key, region, device, action):
-        Domoticz.Debug(" ".join(["/usr/bin/node", "%scall_ewelink_api.js" % Parameters['HomeFolder'],
-                                 access_token, api_key, region, device, action]))
         status = {}
-        with subprocess.Popen(["/usr/bin/node", "%scall_ewelink_api.js" % Parameters['HomeFolder'],
-                               access_token, api_key, region, device, action], stdout=subprocess.PIPE) as proc:
-            line = proc.stdout.read().decode("utf-8", "strict")
-            if line.startswith(device):
-                stat = line.split(" ", 1)
-                status = json.loads(stat[1])
+        try:
+            with subprocess.Popen(["node", "%scall_ewelink_api.js" % Parameters['HomeFolder'],
+                                   access_token, api_key, region, device, action], stdout=subprocess.PIPE) as proc:
+                line = proc.stdout.read().decode("utf-8", "strict")
+                if line.startswith(device):
+                    stat = line.split(" ", 1)
+                    status = json.loads(stat[1])
+        except FileNotFoundError as er:
+            if er.filename == 'node':
+                Domoticz.Error("Node.js is not installed or not added to PATH!")
+            elif str(er.filename).endswith("call_ewelink_api.js"):
+                if not os.path.exists("%scall_ewelink_api.js" % Parameters['HomeFolder']):
+                    Domoticz.Error("Plugin file call_ewelink_api.js was deleted! Revert changes in plugin dir.")
+                else:
+                    Domoticz.Error("Something goes wrong. \
+                    Please report the issue: https://github.com/MarcelSlabosz/domoticz_sonoff_ewelink_api_plugin/issues.\
+                    %s" % repr(er))
+            else:
+                Domoticz.Error("Something goes wrong. \
+                Please report an issue: https://github.com/MarcelSlabosz/domoticz_sonoff_ewelink_api_plugin/issues. %s"\
+                               % repr(er))
         return status
 
     def _refresh_state(self):

@@ -66,3 +66,17 @@ in all off them. Each time when you call `node get_credentials.js` you need upda
 # Dependencies
 * Node.js
 * eWeLink opensource API: https://ewelink-api.now.sh/docs/introduction
+
+# Troubleshooting
+
+0. **"Node.js is not installed or not added to PATH!" is reported to logs.** 
+    
+    0. Make sure that node is available in PATH environment variable.
+    0. Follow the step 1 in Install dependencies section. 
+    
+0. **"Plugin file call_ewelink_api.js was deleted! Revert changes in plugin dir." is reported to logs.**
+
+    Probably some plugin file was accidentally removed. Revert changes by calling command
+    ```git reset --hard``` in plugin root directory. If it doesn't help, please report the issue: 
+    https://github.com/MarcelSlabosz/domoticz_sonoff_ewelink_api_plugin/issues
+    
